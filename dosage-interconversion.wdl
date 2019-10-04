@@ -11,7 +11,7 @@ task bgen_to_vcf {
 	}
 
 	runtime {
-		docker: "kwesterman/genotype-interconversion:latest",
+		docker: "kwesterman/dosage-interconversion:latest",
 		memory: "${memory} GB"
 	}
 
@@ -33,7 +33,7 @@ task vcf_to_bgen {
 	}
 
 	runtime {
-		docker: "kwesterman/genotype-interconversion:latest",
+		docker: "kwesterman/dosage-interconversion:latest",
 		memory: "${memory} GB"
 	}
 
@@ -58,7 +58,7 @@ task vcf_to_minimac {
 			#${"--info " + info_file} \
 
 	runtime {
-		docker: "kwesterman/genotype-interconversion:latest",
+		docker: "kwesterman/dosage-interconversion:latest",
 		memory: "${memory} GB"
 	}
 
@@ -88,7 +88,7 @@ task minimac_to_mmap {
 	}
 
 	runtime {
-		docker: "kwesterman/genotype-interconversion:latest"
+		docker: "kwesterman/dosage-interconversion:latest"
 	}
 
 	output {
