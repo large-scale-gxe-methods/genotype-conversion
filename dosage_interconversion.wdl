@@ -3,6 +3,7 @@ task bgen_to_vcf {
 	#File bgen_pattern  # Can include "#" character as chromosome wildcard
 	File bgen_file
 	String outfile = basename(bgen_file, ".bgen")
+	String memory
 
 	command {
 		$QCTOOL \
@@ -11,7 +12,7 @@ task bgen_to_vcf {
 	}
 
 	runtime {
-		docker: "kwesterman/dosage-interconversion:latest",
+		docker: "kwesterman/dosage-interconversion:latest"
 		memory: "${memory} GB"
 	}
 
@@ -25,6 +26,7 @@ task vcf_to_bgen {
 	#File vcf_pattern  # Can include "#" character as chromosome wildcard
 	File vcf_file
 	String outfile = basename(vcf_file, ".vcf.gz")
+	String memory
 
 	command {
 		$QCTOOL \
@@ -33,7 +35,7 @@ task vcf_to_bgen {
 	}
 
 	runtime {
-		docker: "kwesterman/dosage-interconversion:latest",
+		docker: "kwesterman/dosage-interconversion:latest"
 		memory: "${memory} GB"
 	}
 
@@ -47,6 +49,7 @@ task vcf_to_minimac {
 	File vcf_file
 	#File? info_file
 	String outfile = basename(vcf_file, ".vcf.gz")
+	String memory
 
 	command {
 		$DosageConvertor \
@@ -58,7 +61,7 @@ task vcf_to_minimac {
 			#${"--info " + info_file} \
 
 	runtime {
-		docker: "kwesterman/dosage-interconversion:latest",
+		docker: "kwesterman/dosage-interconversion:latest"
 		memory: "${memory} GB"
 	}
 
@@ -73,6 +76,7 @@ task minimac_to_mmap {
 	File dose_file
 	File info_file
 	String outfile = basename(dose_file, ".dose.gz")
+	String memory
 
 	command {
 		$MMAP \
@@ -89,11 +93,11 @@ task minimac_to_mmap {
 
 	runtime {
 		docker: "kwesterman/dosage-interconversion:latest"
+		memory: "${memory} GB"
 	}
 
 	output {
-		File out = "${outfile}_bin",
-		memory: "${memory} GB"
+		File out = "${outfile}_bin"
 	}
 }
 
