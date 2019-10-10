@@ -1,6 +1,0 @@
-{
-  "convert.conversion": "vcf2minimac",
-  "convert.input_files": ["data/chr20sub.dose.vcf.gz",
-			"data/chr20sub2.dose.vcf.gz"],
-  "convert.memory": "1"
-}

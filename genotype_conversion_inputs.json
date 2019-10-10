@@ -1,0 +1,6 @@
+{
+  "convert.conversion": "minimac2mmap",
+  "convert.input_files": ["testfiles/chr22subset.dose.mach.dose.gz"],
+  "convert.info_files": ["testfiles/chr22subset.dose.mach.info"],
+  "convert.memory": "1"
+}
