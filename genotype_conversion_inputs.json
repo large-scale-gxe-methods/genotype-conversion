@@ -1,6 +1,5 @@
 {
-  "convert.conversion": "minimac2mmap",
-  "convert.input_files": ["testfiles/chr22subset.dose.mach.dose.gz"],
-  "convert.info_files": ["testfiles/chr22subset.dose.mach.info"],
+  "convert.conversion": "vcf2minimac",
+  "convert.input_files": ["testfiles/chr22subset.dose.vcf.gz", "testfiles/chr22subset.dose.vcf.gz"],
   "convert.memory": "1"
 }

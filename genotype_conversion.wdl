@@ -17,7 +17,7 @@ task bgen_to_vcf {
 	}
 
 	output {
-		File out = "${outfile}.vcf.gz"
+		File out_vcf = "${outfile}.vcf.gz"
 	}
 }
 
@@ -40,7 +40,7 @@ task vcf_to_bgen {
 	}
 
 	output {
-		File out = "${outfile}.bgen"
+		File out_bgen = "${outfile}.bgen"
 	}
 }
 
@@ -57,6 +57,7 @@ task vcf_to_minimac {
 			--type mach \
 			--format 1 \
 			--prefix ${outfile}
+		gunzip < "${outfile}.mach.dose.gz" > "${outfile}.mach.dose"
 	}
 			#${"--info " + info_file} \
 
@@ -66,8 +67,9 @@ task vcf_to_minimac {
 	}
 
 	output {
-		File out = "${outfile}.mach.dose.gz"
-		File info_out = "${outfile}.mach.info"
+		File out_minimac_gz = "${outfile}.mach.dose.gz"
+		File out_minimac = "${outfile}.mach.dose"
+		File out_info = "${outfile}.mach.info"
 	}
 }
 
@@ -97,7 +99,7 @@ task minimac_to_mmap {
 	}
 
 	output {
-		File out = "${outfile}_bin"
+		File out_mmap = "${outfile}_bin"
 	}
 }
 
