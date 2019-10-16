@@ -57,7 +57,7 @@ task vcf_to_minimac {
 			--type mach \
 			--format 1 \
 			--prefix ${outfile}
-		gunzip < "${outfile}.mach.dose.gz" > "${outfile}.mach.dose"
+		gunzip < "${outfile}.mach.dose.gz" | tr '\t' ' ' > "${outfile}.mach.dose"
 	}
 			#${"--info " + info_file} \
 
