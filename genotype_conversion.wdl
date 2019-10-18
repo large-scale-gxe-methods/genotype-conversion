@@ -106,6 +106,10 @@ task minimac_to_mmap {
 
 workflow convert {
 
+	meta {
+		decription: "Convert genotype data for use in downstream GxE testing, with Minimac4 VCF as the assumed base format. Currently implements VCF to .bgen, Minimac dose, or MMAP, as well as conversion from .bgen to VCF."
+	}
+
 	String conversion
 	Array[File] input_files
 	Array[File]? info_files
