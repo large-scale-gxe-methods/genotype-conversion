@@ -3,7 +3,8 @@ task bgen_to_vcf {
 	#File bgen_pattern  # Can include "#" character as chromosome wildcard
 	File bgen_file
 	String outfile = basename(bgen_file, ".bgen")
-	String memory
+	String? memory = 10
+	String? disk = 20
 
 	command {
 		$QCTOOL \
@@ -14,6 +15,7 @@ task bgen_to_vcf {
 	runtime {
 		docker: "kwesterman/dosage-interconversion:latest"
 		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
 	}
 
 	output {
@@ -26,7 +28,8 @@ task vcf_to_bgen {
 	#File vcf_pattern  # Can include "#" character as chromosome wildcard
 	File vcf_file
 	String outfile = basename(vcf_file, ".vcf.gz")
-	String memory
+	String? memory = 10
+	String? disk = 20
 
 	command {
 		$QCTOOL \
@@ -37,6 +40,7 @@ task vcf_to_bgen {
 	runtime {
 		docker: "kwesterman/dosage-interconversion:latest"
 		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
 	}
 
 	output {
@@ -49,7 +53,8 @@ task vcf_to_minimac {
 	File vcf_file
 	#File? info_file
 	String outfile = basename(vcf_file, ".vcf.gz")
-	String memory
+	String? memory = 10
+	String? disk = 20
 
 	command {
 		$DosageConvertor \
@@ -64,6 +69,7 @@ task vcf_to_minimac {
 	runtime {
 		docker: "kwesterman/dosage-interconversion:latest"
 		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
 	}
 
 	output {
@@ -78,7 +84,8 @@ task minimac_to_mmap {
 	File dose_file
 	File info_file
 	String outfile = basename(dose_file, ".dose.gz")
-	String memory
+	String? memory = 10
+	String? disk = 20
 
 	command {
 		$MMAP \
@@ -96,6 +103,7 @@ task minimac_to_mmap {
 	runtime {
 		docker: "kwesterman/dosage-interconversion:latest"
 		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
 	}
 
 	output {
@@ -113,20 +121,18 @@ workflow convert {
 	String conversion
 	Array[File] input_files
 	Array[File]? info_files
-	String memory
+	String? memory
+	String? disk
 
 	if(conversion == "bgen2vcf") {
 		scatter (input_file in input_files) {
 			call bgen_to_vcf {
 				input:
 					bgen_file = input_file, 
-					memory = memory
+					memory = memory,
+					disk = disk
 			}
 		}
-
-		#output {
-		#	File outfile = bgen_to_vcf.out
-		#}
 	}
 
 	if(conversion == "vcf2bgen") {
@@ -134,13 +140,10 @@ workflow convert {
 			call vcf_to_bgen {
 				input:
 					vcf_file = input_file, 
-					memory = memory
+					memory = memory,
+					disk = disk
 			}
 		}
-
-		#output {
-		#	File outfile = vcf_to_bgen.out
-		#}
 	}
 
 	if(conversion == "vcf2minimac") {
@@ -148,14 +151,11 @@ workflow convert {
 			call vcf_to_minimac {
 				input:
 					vcf_file = input_file, 
-					memory = memory
+					memory = memory,
+					disk = disk
 					#info_file = info_file
 			}
 		}
-
-		#output {
-		#	File minimac_outfile = vcf_to_minimac.out
-		#}
 	}
 
 	if(conversion == "minimac2mmap") {
@@ -168,12 +168,9 @@ workflow convert {
 				input:
 					dose_file = fileset.left,
 					info_file = fileset.right, 
-					memory = memory
+					memory = memory,
+					disk = disk
 			}
 		}
-
-		#output {
-		#	File mmap_outfile = vcf_to_mmap.out
-		#}
 	}
 }
