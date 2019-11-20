@@ -1,4 +1,4 @@
 {
   "convert.conversion": "vcf2minimac",
-  "convert.input_files": ["testfiles/chr22subset.dose.vcf.gz", "testfiles/chr22subset.dose.vcf.gz"]
+  "convert.input_files": ["testfiles/chr22subset.dose.vcf.gz"]
 }

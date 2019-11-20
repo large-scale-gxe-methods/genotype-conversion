@@ -14,5 +14,5 @@ RUN apt-get update && apt-get install -y cmake python python-pip git libz-dev &&
 	./install.sh
 ENV DosageConvertor=/DosageConvertor/release-build/DosageConvertor
 
-COPY mmap.2018_04_07_13_28.intel /
+COPY opt/mmap.2018_04_07_13_28.intel /
 ENV MMAP=/mmap.2018_04_07_13_28.intel
