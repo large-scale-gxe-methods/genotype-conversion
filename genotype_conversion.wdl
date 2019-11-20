@@ -114,10 +114,6 @@ task minimac_to_mmap {
 
 workflow convert {
 
-	meta {
-		decription: "Convert genotype data for use in downstream GxE testing, with Minimac4 VCF as the assumed base format. Currently implements VCF to .bgen, Minimac dose, or MMAP, as well as conversion from .bgen to VCF."
-	}
-
 	String conversion
 	Array[File] input_files
 	Array[File]? info_files
@@ -172,5 +168,19 @@ workflow convert {
 					disk = disk
 			}
 		}
+	}
+
+	parameter_meta {
+		conversion: "String representing the requested conversion. Current options include: bgen2vcf, vcf2bgen, vcf2minimac, and minimac2mmap."
+		input_files: "Array of genotype dosage files (currently, in VCF or .bgen format)."
+		info_files: "Array of variant info files (used in the Minimac to MMAP conversion)." 
+		memory: "Requested memory (in GB)."
+		disk: "Requested disk space (in GB)."
+	}
+
+	meta {
+                author: "Kenny Westerman"
+                email: "kewesterman@mgh.harvard.edu"
+		decription: "Convert imputed genotype data file formats for use in downstream GxE testing, with Minimac4 VCF as the assumed base format. Currently implements VCF to .bgen/Minimac dose/MMAP and .bgen to VCF."
 	}
 }
