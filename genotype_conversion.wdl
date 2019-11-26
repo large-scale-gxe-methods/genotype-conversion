@@ -2,6 +2,7 @@ task bgen_to_vcf {
 
 	#File bgen_pattern  # Can include "#" character as chromosome wildcard
 	File bgen_file
+	String? variant_range_filter = ""
 	String outfile = basename(bgen_file, ".bgen")
 	String? memory = 10
 	String? disk = 20
@@ -9,6 +10,7 @@ task bgen_to_vcf {
 	command {
 		$QCTOOL \
 			-g ${bgen_file} \
+			-incl-range ${variant_range_filter} \
 			-og ${outfile}.vcf.gz
 	}
 
@@ -27,6 +29,7 @@ task vcf_to_bgen {
 
 	#File vcf_pattern  # Can include "#" character as chromosome wildcard
 	File vcf_file
+	String? variant_range_filter = ""
 	String outfile = basename(vcf_file, ".vcf.gz")
 	String? memory = 10
 	String? disk = 20
@@ -34,6 +37,7 @@ task vcf_to_bgen {
 	command {
 		$QCTOOL \
 			-g ${vcf_file} \
+			-incl-range ${variant_range_filter} \
 			-og ${outfile}.bgen
 	}
 
@@ -117,6 +121,7 @@ workflow convert {
 	String conversion
 	Array[File] input_files
 	Array[File]? info_files
+	String? variant_range_filter
 	String? memory
 	String? disk
 
@@ -125,6 +130,7 @@ workflow convert {
 			call bgen_to_vcf {
 				input:
 					bgen_file = input_file, 
+					variant_range_filter = variant_range_filter,
 					memory = memory,
 					disk = disk
 			}
@@ -136,6 +142,7 @@ workflow convert {
 			call vcf_to_bgen {
 				input:
 					vcf_file = input_file, 
+					variant_range_filter = variant_range_filter,
 					memory = memory,
 					disk = disk
 			}
@@ -174,6 +181,7 @@ workflow convert {
 		conversion: "String representing the requested conversion. Current options include: bgen2vcf, vcf2bgen, vcf2minimac, and minimac2mmap."
 		input_files: "Array of genotype dosage files (currently, in VCF or .bgen format)."
 		info_files: "Array of variant info files (used in the Minimac to MMAP conversion)." 
+		variant_range_filter: "Optional string for variant filtering. Format: chr:start-stop (e.g. 2:100000-500000)."
 		memory: "Requested memory (in GB)."
 		disk: "Requested disk space (in GB)."
 	}
