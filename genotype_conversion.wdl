@@ -1,11 +1,10 @@
 task bgen_to_vcf {
 
-	#File bgen_pattern  # Can include "#" character as chromosome wildcard
 	File bgen_file
 	String? variant_range_filter = ""
 	String outfile = basename(bgen_file, ".bgen")
-	String? memory = 10
-	String? disk = 20
+	Int? memory = 10
+	Int? disk = 20
 
 	command {
 		$QCTOOL \
@@ -27,18 +26,18 @@ task bgen_to_vcf {
 
 task vcf_to_bgen {
 
-	#File vcf_pattern  # Can include "#" character as chromosome wildcard
 	File vcf_file
 	String? variant_range_filter = ""
 	String outfile = basename(vcf_file, ".vcf.gz")
-	String? memory = 10
-	String? disk = 20
+	Int? memory = 10
+	Int? disk = 20
 
 	command {
 		$QCTOOL \
 			-g ${vcf_file} \
 			-incl-range ${variant_range_filter} \
-			-og ${outfile}.bgen
+			-og ${outfile}.bgen \
+			-os ${outfile}.sample
 	}
 
 	runtime {
@@ -49,6 +48,7 @@ task vcf_to_bgen {
 
 	output {
 		File out_bgen = "${outfile}.bgen"
+		File out_sample = "${outfile}.sample"
 	}
 }
 
@@ -57,8 +57,8 @@ task vcf_to_minimac {
 	File vcf_file
 	#File? info_file
 	String outfile = basename(vcf_file, ".vcf.gz")
-	String? memory = 10
-	String? disk = 20
+	Int? memory = 10
+	Int? disk = 20
 
 	command {
 		$DosageConvertor \
@@ -88,8 +88,8 @@ task minimac_to_mmap {
 	File dose_file
 	File info_file
 	String outfile = basename(dose_file, ".dose.gz")
-	String? memory = 10
-	String? disk = 20
+	Int? memory = 10
+	Int? disk = 20
 
 	command {
 		$MMAP \
@@ -135,6 +135,10 @@ workflow convert {
 					disk = disk
 			}
 		}
+
+		output {
+			Array[File]? converted_vcf_files = bgen_to_vcf.out_vcf
+		}
 	}
 
 	if(conversion == "vcf2bgen") {
@@ -147,6 +151,11 @@ workflow convert {
 					disk = disk
 			}
 		}
+
+		output {
+			Array[File]? converted_bgen_files = vcf_to_bgen.out_bgen
+			Array[File]? converted_sample_files = vcf_to_bgen.out_sample
+		}
 	}
 
 	if(conversion == "vcf2minimac") {
@@ -158,6 +167,11 @@ workflow convert {
 					disk = disk
 					#info_file = info_file
 			}
+		}
+
+		output {
+			Array[File]? converted_dose_files = vcf_to_minimac.out_minimac
+			Array[File]? converted_info_files = vcf_to_minimac.out_info
 		}
 	}
 
@@ -174,6 +188,10 @@ workflow convert {
 					memory = memory,
 					disk = disk
 			}
+		}
+
+		output {
+			Array[File]? converted_mmap_files = minimac_to_mmap.out_mmap
 		}
 	}
 
