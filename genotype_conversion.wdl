@@ -1,6 +1,7 @@
 task bgen_to_vcf {
 
 	File bgen_file
+	File? sample_file
 	String? variant_range_filter = ""
 	String outfile = basename(bgen_file, ".bgen")
 	Int? memory = 10
@@ -9,6 +10,7 @@ task bgen_to_vcf {
 	command {
 		$QCTOOL \
 			-g ${bgen_file} \
+			${"-s " + sample_file} \
 			-incl-range ${variant_range_filter} \
 			-og ${outfile}.vcf.gz
 	}
@@ -120,16 +122,22 @@ workflow convert {
 
 	String conversion
 	Array[File] input_files
+	Array[File]? sample_files
 	Array[File]? info_files
 	String? variant_range_filter
 	String? memory
 	String? disk
 
 	if(conversion == "bgen2vcf") {
-		scatter (input_file in input_files) {
+
+		Array[File] sample_files_nonoptional = select_first([sample_files, []])
+		Array[Pair[File,File]] bgen_filesets = zip(input_files, sample_files_nonoptional)
+
+		scatter (fileset in bgen_filesets) {
 			call bgen_to_vcf {
 				input:
-					bgen_file = input_file, 
+					bgen_file = fileset.left, 
+					sample_file = fileset.right,
 					variant_range_filter = variant_range_filter,
 					memory = memory,
 					disk = disk
@@ -178,9 +186,9 @@ workflow convert {
 	if(conversion == "minimac2mmap") {
 
 		Array[File] info_files_nonoptional = select_first([info_files, []])
-		Array[Pair[File,File]] filesets = zip(input_files, info_files_nonoptional)
+		Array[Pair[File,File]] minimac_filesets = zip(input_files, info_files_nonoptional)
 
-		scatter (fileset in filesets) {
+		scatter (fileset in minimac_filesets) {
 			call minimac_to_mmap {
 				input:
 					dose_file = fileset.left,
@@ -198,6 +206,7 @@ workflow convert {
 	parameter_meta {
 		conversion: "String representing the requested conversion. Current options include: bgen2vcf, vcf2bgen, vcf2minimac, and minimac2mmap."
 		input_files: "Array of genotype dosage files (currently, in VCF or .bgen format)."
+		sample_files: "Array of .bgen sample files (optionally used in the .bgen to VCF conversion)."
 		info_files: "Array of variant info files (used in the Minimac to MMAP conversion)." 
 		variant_range_filter: "Optional string for variant filtering. Format: chr:start-stop (e.g. 2:100000-500000)."
 		memory: "Requested memory (in GB)."
