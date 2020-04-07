@@ -16,3 +16,8 @@ ENV DosageConvertor=/DosageConvertor/release-build/DosageConvertor
 
 COPY opt/mmap.2018_04_07_13_28.intel /
 ENV MMAP=/mmap.2018_04_07_13_28.intel
+
+RUN apt-get update && apt-get install unzip
+RUN wget http://s3.amazonaws.com/plink2-assets/alpha2/plink2_linux_avx2.zip \
+	&& unzip plink2_linux_avx2.zip
+ENV PLINK2=/plink2

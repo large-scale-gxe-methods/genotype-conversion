@@ -16,7 +16,7 @@ task bgen_to_vcf {
 	}
 
 	runtime {
-		docker: "kwesterman/dosage-interconversion:latest"
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 	}
@@ -43,7 +43,7 @@ task vcf_to_bgen {
 	}
 
 	runtime {
-		docker: "kwesterman/dosage-interconversion:latest"
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 	}
@@ -73,7 +73,7 @@ task vcf_to_minimac {
 			#${"--info " + info_file} \
 
 	runtime {
-		docker: "kwesterman/dosage-interconversion:latest"
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 	}
@@ -107,13 +107,123 @@ task minimac_to_mmap {
 	}
 
 	runtime {
-		docker: "kwesterman/dosage-interconversion:latest"
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 	}
 
 	output {
 		File out_mmap = "${outfile}_bin"
+	}
+}
+
+task bgen_to_plink2 {
+
+	File bgen_file
+	File? sample_file
+	String outfile = basename(bgen_file, ".bgen")
+	Int? memory = 10
+	Int? disk = 20
+
+	command {
+		$PLINK2 \
+			--bgen ${bgen_file} \
+			--sample ${sample_file} \
+			--make-pgen \
+			--out ${outfile}
+	}
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+	}
+
+	output {
+		File out_pgen = "${outfile}.pgen"
+		File out_psam = "${outfile}.psam"
+		File out_pvar = "${outfile}.pvar"
+	}
+}
+
+task bgen_to_gen {
+
+	File bgen_file
+	File? sample_file
+	String outfile = basename(bgen_file, ".bgen")
+	Int? memory = 10
+	Int? disk = 20
+
+	command {
+		$PLINK2 \
+			--bgen ${bgen_file} \
+			--sample ${sample_file} \
+			--export oxford \
+			--out ${outfile}
+	}
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+	}
+
+	output {
+		File out_gen = "${outfile}.gen"
+		File out_sample = "${outfile}.sample"
+	}
+}
+
+task vcf_to_plink2 {
+
+	File vcf_file
+	String outfile = basename(vcf_file, ".vcf.gz")
+	Int? memory = 10
+	Int? disk = 20
+
+	command {
+		$PLINK2 \
+			--vcf ${vcf_file} dosage=DS \
+			--make-pgen \
+			--out ${outfile}
+	}
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+	}
+
+	output {
+		File out_pgen = "${outfile}.pgen"
+		File out_psam = "${outfile}.psam"
+		File out_pvar = "${outfile}.pvar"
+	}
+}
+
+task vcf_to_gen {
+
+	File vcf_file
+	String outfile = basename(vcf_file, ".vcf.gz")
+	Int? memory = 10
+	Int? disk = 20
+
+	command {
+		$PLINK2 \
+			--vcf ${vcf_file} dosage=DS \
+			--export oxford \
+			--out ${outfile}
+	}
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+	}
+
+	output {
+		File out_gen = "${outfile}.gen"
+		File out_sample = "${outfile}.sample"
 	}
 }
 
@@ -162,7 +272,7 @@ workflow convert {
 
 		output {
 			Array[File]? converted_bgen_files = vcf_to_bgen.out_bgen
-			Array[File]? converted_sample_files = vcf_to_bgen.out_sample
+			Array[File]? converted_bgen_sample_files = vcf_to_bgen.out_sample
 		}
 	}
 
@@ -203,8 +313,85 @@ workflow convert {
 		}
 	}
 
+	#if(conversion == "bgen2plink2") {
+
+	#	Array[File] sample_files_for_plink2_nonoptional = select_first([sample_files, []])
+	#	Array[Pair[File,File]] bgen_filesets_for_plink2 = zip(input_files, sample_files_for_plink2_nonoptional)
+
+	#	scatter (fileset in bgen_filesets_for_plink2) {
+	#		call bgen_to_plink2 {
+	#			input:
+	#				bgen_file = fileset.left, 
+	#				sample_file = fileset.right,
+	#				memory = memory,
+	#				disk = disk
+	#		}
+	#	}
+
+	#	output {
+	#		Array[File]? converted_plink2_pgen = bgen_to_plink2.out_pgen
+	#		Array[File]? converted_plink2_psam = bgen_to_plink2.out_psam
+	#		Array[File]? converted_plink2_pvar = bgen_to_plink2.out_pvar
+	#	}
+	#}
+
+	#if(conversion == "bgen2gen") {
+
+	#	Array[File] sample_files_for_gen_nonoptional = select_first([sample_files, []])
+	#	Array[Pair[File,File]] bgen_filesets_for_gen = zip(input_files, sample_files_for_gen_nonoptional)
+
+	#	scatter (fileset in bgen_filesets_for_gen) {
+	#		call bgen_to_gen {
+	#			input:
+	#				bgen_file = fileset.left, 
+	#				sample_file = fileset.right,
+	#				memory = memory,
+	#				disk = disk
+	#		}
+	#	}
+
+	#	output {
+	#		Array[File]? converted_gen_files = bgen_to_gen.out_gen
+	#		Array[File]? converted_gen_sample_files = bgen_to_gen.out_sample
+	#	}
+	#}
+
+	if(conversion == "vcf2plink2") {
+		scatter (input_file in input_files) {
+			call vcf_to_plink2 {
+				input:
+					vcf_file = input_file, 
+					memory = memory,
+					disk = disk
+			}
+		}
+
+		output {
+			Array[File]? converted_plink2_pgen = vcf_to_plink2.out_pgen
+			Array[File]? converted_plink2_psam = vcf_to_plink2.out_psam
+			Array[File]? converted_plink2_pvar = vcf_to_plink2.out_pvar
+		}
+	}
+
+	if(conversion == "vcf2gen") {
+		scatter (input_file in input_files) {
+			call vcf_to_gen {
+				input:
+					vcf_file = input_file, 
+					memory = memory,
+					disk = disk
+			}
+		}
+
+		output {
+			Array[File]? converted_gen_files = vcf_to_gen.out_gen
+			Array[File]? converted_gen_sample_files = vcf_to_gen.out_sample
+		}
+	}
+
+
 	parameter_meta {
-		conversion: "String representing the requested conversion. Current options include: bgen2vcf, vcf2bgen, vcf2minimac, and minimac2mmap."
+		conversion: "String representing the requested conversion. Current options include: bgen2vcf, vcf2bgen, vcf2minimac, minimac2mmap, bgen2gen, and bgen2plink2."
 		input_files: "Array of genotype dosage files (currently, in VCF or .bgen format)."
 		sample_files: "Array of .bgen sample files (optionally used in the .bgen to VCF conversion)."
 		info_files: "Array of variant info files (used in the Minimac to MMAP conversion)." 
@@ -216,6 +403,6 @@ workflow convert {
 	meta {
                 author: "Kenny Westerman"
                 email: "kewesterman@mgh.harvard.edu"
-		decription: "Convert imputed genotype data file formats for use in downstream GxE testing, with Minimac4 VCF as the assumed base format. Currently implements VCF to .bgen/Minimac dose/MMAP and .bgen to VCF."
+		decription: "Convert imputed genotype data file formats for use in downstream GxE testing, with Minimac4 VCF as the assumed base format. Currently implements VCF to .bgen, Minimac dose, or MMAP and .bgen to VCF, .gen (Oxford), and pgen/psam/pvar (PLINK2)."
 	}
 }

@@ -1,0 +1,5 @@
+{
+  "convert.conversion": "bgen2plink2",
+  "convert.input_files": ["testfiles/chr22subset.dose.bgen","testfiles/chr22subset.dose.bgen"],
+  "convert.sample_files": ["testfiles/chr22subset.dose.sample","testfiles/chr22subset.dose.sample"]
+}
