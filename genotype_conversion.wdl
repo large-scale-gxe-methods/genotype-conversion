@@ -85,6 +85,61 @@ task vcf_to_minimac {
 	}
 }
 
+task vcf_to_plink2 {
+
+	File vcf_file
+	String dosage_type
+	String outfile = basename(vcf_file, ".vcf.gz")
+	Int? memory = 10
+	Int? disk = 20
+
+	command {
+		$PLINK2 \
+			--vcf ${vcf_file} ${"dosage=" + dosage_type} \
+			--make-pgen \
+			--out ${outfile}
+	}
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+	}
+
+	output {
+		File out_pgen = "${outfile}.pgen"
+		File out_psam = "${outfile}.psam"
+		File out_pvar = "${outfile}.pvar"
+	}
+}
+
+task vcf_to_gen {
+
+	File vcf_file
+	String dosage_type
+	String outfile = basename(vcf_file, ".vcf.gz")
+	Int? memory = 10
+	Int? disk = 20
+
+	command {
+		$PLINK2 \
+			--vcf ${vcf_file} ${"dosage=" + dosage_type} \
+			--export oxford \
+			--out ${outfile}
+	}
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+	}
+
+	output {
+		File out_gen = "${outfile}.gen"
+		File out_sample = "${outfile}.sample"
+	}
+}
+
 task minimac_to_mmap {
 
 	File dose_file
@@ -174,59 +229,6 @@ task bgen_to_gen {
 	}
 }
 
-task vcf_to_plink2 {
-
-	File vcf_file
-	String outfile = basename(vcf_file, ".vcf.gz")
-	Int? memory = 10
-	Int? disk = 20
-
-	command {
-		$PLINK2 \
-			--vcf ${vcf_file} dosage=DS \
-			--make-pgen \
-			--out ${outfile}
-	}
-
-	runtime {
-		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
-		memory: "${memory} GB"
-		disks: "local-disk ${disk} HDD"
-	}
-
-	output {
-		File out_pgen = "${outfile}.pgen"
-		File out_psam = "${outfile}.psam"
-		File out_pvar = "${outfile}.pvar"
-	}
-}
-
-task vcf_to_gen {
-
-	File vcf_file
-	String outfile = basename(vcf_file, ".vcf.gz")
-	Int? memory = 10
-	Int? disk = 20
-
-	command {
-		$PLINK2 \
-			--vcf ${vcf_file} dosage=DS \
-			--export oxford \
-			--out ${outfile}
-	}
-
-	runtime {
-		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
-		memory: "${memory} GB"
-		disks: "local-disk ${disk} HDD"
-	}
-
-	output {
-		File out_gen = "${outfile}.gen"
-		File out_sample = "${outfile}.sample"
-	}
-}
-
 
 workflow convert {
 
@@ -234,6 +236,7 @@ workflow convert {
 	Array[File] input_files
 	Array[File]? sample_files
 	Array[File]? info_files
+	String? dosage_type = "DS"
 	String? variant_range_filter
 	String? memory
 	String? disk
@@ -290,6 +293,41 @@ workflow convert {
 		output {
 			Array[File]? converted_dose_files = vcf_to_minimac.out_minimac
 			Array[File]? converted_info_files = vcf_to_minimac.out_info
+		}
+	}
+
+	if(conversion == "vcf2plink2") {
+		scatter (input_file in input_files) {
+			call vcf_to_plink2 {
+				input:
+					vcf_file = input_file, 
+					dosage_type = dosage_type,
+					memory = memory,
+					disk = disk
+			}
+		}
+
+		output {
+			Array[File]? converted_plink2_pgen = vcf_to_plink2.out_pgen
+			Array[File]? converted_plink2_psam = vcf_to_plink2.out_psam
+			Array[File]? converted_plink2_pvar = vcf_to_plink2.out_pvar
+		}
+	}
+
+	if(conversion == "vcf2gen") {
+		scatter (input_file in input_files) {
+			call vcf_to_gen {
+				input:
+					vcf_file = input_file, 
+					dosage_type = dosage_type,
+					memory = memory,
+					disk = disk
+			}
+		}
+
+		output {
+			Array[File]? converted_gen_files = vcf_to_gen.out_gen
+			Array[File]? converted_gen_sample_files = vcf_to_gen.out_sample
 		}
 	}
 
@@ -356,45 +394,13 @@ workflow convert {
 	#	}
 	#}
 
-	if(conversion == "vcf2plink2") {
-		scatter (input_file in input_files) {
-			call vcf_to_plink2 {
-				input:
-					vcf_file = input_file, 
-					memory = memory,
-					disk = disk
-			}
-		}
-
-		output {
-			Array[File]? converted_plink2_pgen = vcf_to_plink2.out_pgen
-			Array[File]? converted_plink2_psam = vcf_to_plink2.out_psam
-			Array[File]? converted_plink2_pvar = vcf_to_plink2.out_pvar
-		}
-	}
-
-	if(conversion == "vcf2gen") {
-		scatter (input_file in input_files) {
-			call vcf_to_gen {
-				input:
-					vcf_file = input_file, 
-					memory = memory,
-					disk = disk
-			}
-		}
-
-		output {
-			Array[File]? converted_gen_files = vcf_to_gen.out_gen
-			Array[File]? converted_gen_sample_files = vcf_to_gen.out_sample
-		}
-	}
-
 
 	parameter_meta {
-		conversion: "String representing the requested conversion. Current options include: bgen2vcf, vcf2bgen, vcf2minimac, minimac2mmap, bgen2gen, and bgen2plink2."
+		conversion: "String representing the requested conversion. Current options include: bgen2vcf, vcf2bgen, vcf2minimac, vcf2plink2, vcf2gen, and minimac2mmap."
 		input_files: "Array of genotype dosage files (currently, in VCF or .bgen format)."
 		sample_files: "Array of .bgen sample files (optionally used in the .bgen to VCF conversion)."
 		info_files: "Array of variant info files (used in the Minimac to MMAP conversion)." 
+		dosage_type: "Type of allele dosage to read in from imputed VCF file (optional; options = GP/GP-force/HDS/DS, default GP)."
 		variant_range_filter: "Optional string for variant filtering. Format: chr:start-stop (e.g. 2:100000-500000)."
 		memory: "Requested memory (in GB)."
 		disk: "Requested disk space (in GB)."

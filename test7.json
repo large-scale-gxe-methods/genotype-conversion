@@ -1,4 +1,0 @@
-{
-  "convert.conversion": "vcf2gen",
-  "convert.input_files": ["testfiles/chr22subset.dose.vcf.gz","testfiles/chr22subset.dose.vcf.gz"]
-}

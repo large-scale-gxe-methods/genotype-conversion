@@ -1,5 +1,5 @@
 {
-  "convert.conversion": "bgen2vcf",
-  "convert.input_files": ["testfiles/chr22subset.dose.bgen","testfiles/chr22subset.dose.bgen"],
-  "convert.sample_files": ["testfiles/chr22subset.dose.sample","testfiles/chr22subset.dose.sample"]
+  "convert.conversion": "vcf2minimac",
+  "convert.variant_range_filter": "22:16300000-16450000",
+  "convert.input_files": ["testfiles/chr22subset.dose.vcf.gz","testfiles/chr22subset.dose.vcf.gz"]
 }
