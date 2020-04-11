@@ -1,6 +1,37 @@
 task bgen_to_vcf {
 
 	File bgen_file
+	File sample_file
+	String outfile = basename(bgen_file, ".bgen")
+	Int? memory = 10
+	Int? disk = 20
+
+	command <<<
+		head -2 ${sample_file} > plink_sample.sample && \
+		tail -n +3 ${sample_file} | awk '{print 0,$2,$3,$4}' >> plink_sample.sample
+	
+		$PLINK2 \
+			--bgen ${bgen_file} ref-first \
+			--sample plink_sample.sample \
+			--allow-extra-chr \
+			--export vcf bgz vcf-dosage=GP \
+			--out ${outfile}
+	>>>
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+	}
+
+	output {
+		File out_vcf = "${outfile}.vcf.gz"
+	}
+}
+
+task bgen_to_vcf_2 {
+
+	File bgen_file
 	File? sample_file
 	String? variant_range_filter = ""
 	String outfile = basename(bgen_file, ".bgen")
@@ -123,10 +154,12 @@ task vcf_to_gen {
 
 	command {
 		$PLINK2 \
-			--vcf ${vcf_file} ${"dosage=" + dosage_type} \
-			--export oxford \
+			--vcf ${vcf_file} \
+			--allow-extra-chr \
+			--export oxford bgz \
 			--out ${outfile}
 	}
+			#--vcf ${vcf_file} ${"dosage=" + dosage_type} \
 
 	runtime {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
@@ -135,7 +168,7 @@ task vcf_to_gen {
 	}
 
 	output {
-		File out_gen = "${outfile}.gen"
+		File out_gen = "${outfile}.gen.gz"
 		File out_sample = "${outfile}.sample"
 	}
 }
@@ -236,7 +269,7 @@ workflow convert {
 	Array[File] input_files
 	Array[File]? sample_files
 	Array[File]? info_files
-	String? dosage_type = "DS"
+	String? dosage_type = "GP"
 	String? variant_range_filter
 	String? memory
 	String? disk
@@ -251,7 +284,6 @@ workflow convert {
 				input:
 					bgen_file = fileset.left, 
 					sample_file = fileset.right,
-					variant_range_filter = variant_range_filter,
 					memory = memory,
 					disk = disk
 			}
