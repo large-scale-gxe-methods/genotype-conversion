@@ -7,14 +7,22 @@ task bgen_to_vcf {
 	Int? disk = 20
 
 	command <<<
-		head -2 ${sample_file} > plink_sample.sample && \
-		tail -n +3 ${sample_file} | awk '{print 0,$2,$3,$4}' >> plink_sample.sample
-	
 		$PLINK2 \
 			--bgen ${bgen_file} ref-first \
-			--sample plink_sample.sample \
+			--sample ${sample_file} \
 			--allow-extra-chr \
-			--export vcf bgz vcf-dosage=GP \
+			--make-pgen \
+			--out ${outfile}
+
+		mv ${outfile}.pvar ${outfile}.pvar2
+		echo '##INFO=<ID=R2,Number=1,Type=Float,Description="Imputation R2">' > ${outfile}.pvar
+		head -1 ${outfile}.pvar2 | awk '{print $0"\tINFO"}' >> ${outfile}.pvar
+		tail -n +2 ${outfile}.pvar2 | awk '{print $0"\tR2=1"}' >> ${outfile}.pvar
+
+		$PLINK2 \
+			--pfile ${outfile} \
+			--allow-extra-chr \
+			--export vcf bgz id-paste=iid vcf-dosage=DS-force \
 			--out ${outfile}
 	>>>
 
@@ -93,15 +101,14 @@ task vcf_to_minimac {
 	Int? memory = 10
 	Int? disk = 20
 
-	command {
+	command <<<
 		$DosageConvertor \
 			--vcfDose ${vcf_file} \
 			--type mach \
 			--format 1 \
 			--prefix ${outfile}
 		gunzip < "${outfile}.mach.dose.gz" | tr '\t' ' ' > "${outfile}.mach.dose"
-	}
-			#${"--info " + info_file} \
+	>>>
 
 	runtime {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
@@ -441,6 +448,6 @@ workflow convert {
 	meta {
                 author: "Kenny Westerman"
                 email: "kewesterman@mgh.harvard.edu"
-		decription: "Convert imputed genotype data file formats for use in downstream GxE testing, with Minimac4 VCF as the assumed base format. Currently implements VCF to .bgen, Minimac dose, or MMAP and .bgen to VCF, .gen (Oxford), and pgen/psam/pvar (PLINK2)."
+		decription: "Convert imputed genotype data file formats for use in downstream GxE testing, with Minimac4 VCF as the 'hub' for conversion ot other formats. Currently implements VCF to .bgen, .gen (Oxford), pgen/psam/pvar (PLINK2), or Minimac dose; .bgen to VCF; and Minimac dose to MMAP."
 	}
 }
