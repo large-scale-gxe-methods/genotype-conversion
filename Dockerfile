@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:18.04
 
 MAINTAINER Kenny Westerman <kewesterman@mgh.harvard.edu>
 
@@ -18,6 +18,6 @@ COPY opt/mmap.2018_04_07_13_28.intel /
 ENV MMAP=/mmap.2018_04_07_13_28.intel
 
 RUN apt-get update && apt-get install unzip
-RUN wget http://s3.amazonaws.com/plink2-assets/alpha2/plink2_linux_avx2.zip \
-	&& unzip plink2_linux_avx2.zip
+RUN wget http://s3.amazonaws.com/plink2-assets/alpha2/plink2_linux_x86_64.zip \
+	&& unzip plink2_linux_x86_64.zip
 ENV PLINK2=/plink2
