@@ -114,6 +114,7 @@ task vcf_to_minimac {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
+		gpu: false
 	}
 
 	output {
