@@ -30,6 +30,7 @@ task bgen_to_vcf {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
+		gpu: false
 	}
 
 	output {
@@ -58,6 +59,7 @@ task bgen_to_vcf_2 {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
+		gpu: false
 	}
 
 	output {
@@ -85,6 +87,7 @@ task vcf_to_bgen {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
+		gpu: false
 	}
 
 	output {
@@ -143,6 +146,7 @@ task vcf_to_plink2 {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
+		gpu: false
 	}
 
 	output {
@@ -173,6 +177,7 @@ task vcf_to_gen {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
+		gpu: false
 	}
 
 	output {
@@ -206,6 +211,7 @@ task minimac_to_mmap {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
+		gpu: false
 	}
 
 	output {
@@ -233,6 +239,7 @@ task bgen_to_plink2 {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
+		gpu: false
 	}
 
 	output {
@@ -262,6 +269,7 @@ task bgen_to_gen {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
+		gpu: false
 	}
 
 	output {
