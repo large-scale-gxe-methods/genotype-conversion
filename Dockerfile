@@ -7,6 +7,7 @@ RUN apt-get update && apt-get -y install wget libatlas-base-dev && \
 	tar zxvf qctool_v2.0.1-Ubuntu16.04-x86_64.tgz
 ENV QCTOOL=/qctool_v2.0.1-Ubuntu16.04-x86_64/qctool
 
+RUN apt-get install -y software-properties-common && apt-add-repository universe
 RUN apt-get update && apt-get install -y cmake python python-pip git libz-dev && \
 	pip install cget && \
 	git clone https://github.com/Santy-8128/DosageConvertor && \
