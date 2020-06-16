@@ -2,6 +2,7 @@ task bgen_to_vcf {
 
 	File bgen_file
 	File sample_file
+	Float? maf
 	String outfile = basename(bgen_file, ".bgen")
 	Int? memory = 10
 	Int? disk = 20
@@ -11,6 +12,7 @@ task bgen_to_vcf {
 			--bgen ${bgen_file} ref-first \
 			--sample ${sample_file} \
 			--allow-extra-chr \
+			${"--maf " + maf} \
 			--make-pgen \
 			--out ${outfile}
 
@@ -22,6 +24,7 @@ task bgen_to_vcf {
 		$PLINK2 \
 			--pfile ${outfile} \
 			--allow-extra-chr \
+			${"--maf " + maf} \
 			--export vcf bgz id-paste=iid vcf-dosage=DS-force \
 			--out ${outfile}
 	>>>
@@ -70,18 +73,27 @@ task bgen_to_vcf_2 {
 task vcf_to_bgen {
 
 	File vcf_file
+	String? dosage_type
+	Float? maf
 	String? variant_range_filter = ""
-	String outfile = basename(vcf_file, ".vcf.gz")
 	Int? memory = 10
 	Int? disk = 20
 
+	String outfile_nogz = basename(vcf_file, ".gz")
+	String outfile = sub(outfile_nogz, "\\.vcf", "")
+
 	command {
-		$QCTOOL \
-			-g ${vcf_file} \
-			-incl-range ${variant_range_filter} \
-			-og ${outfile}.bgen \
-			-os ${outfile}.sample
+		$PLINK2 \
+			--vcf ${vcf_file} ${"dosage=" + dosage_type} \
+			${"--maf " + maf} \
+			--export bgen-1.2 id-paste=iid ${"vcf-dosage=" + dosage_type} \
+			--out ${outfile}
 	}
+		#$QCTOOL \
+		#	-g ${vcf_file} \
+		#	-incl-range ${variant_range_filter} \
+		#	-og ${outfile}.bgen \
+		#	-os ${outfile}.sample
 
 	runtime {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion:latest"
@@ -130,7 +142,8 @@ task vcf_to_minimac {
 task vcf_to_plink2 {
 
 	File vcf_file
-	String dosage_type
+	String? dosage_type
+	Float? maf
 	String outfile = basename(vcf_file, ".vcf.gz")
 	Int? memory = 10
 	Int? disk = 20
@@ -138,6 +151,7 @@ task vcf_to_plink2 {
 	command {
 		$PLINK2 \
 			--vcf ${vcf_file} ${"dosage=" + dosage_type} \
+			${"--maf " + maf} \
 			--make-pgen \
 			--out ${outfile}
 	}
@@ -159,7 +173,8 @@ task vcf_to_plink2 {
 task vcf_to_gen {
 
 	File vcf_file
-	String dosage_type
+	String? dosage_type
+	Float? maf
 	String outfile = basename(vcf_file, ".vcf.gz")
 	Int? memory = 10
 	Int? disk = 20
@@ -168,6 +183,7 @@ task vcf_to_gen {
 		$PLINK2 \
 			--vcf ${vcf_file} \
 			--allow-extra-chr \
+			${"--maf " + maf} \
 			--export oxford bgz \
 			--out ${outfile}
 	}
@@ -223,6 +239,7 @@ task bgen_to_plink2 {
 
 	File bgen_file
 	File? sample_file
+	Float? maf
 	String outfile = basename(bgen_file, ".bgen")
 	Int? memory = 10
 	Int? disk = 20
@@ -231,6 +248,7 @@ task bgen_to_plink2 {
 		$PLINK2 \
 			--bgen ${bgen_file} \
 			--sample ${sample_file} \
+			${"--maf " + maf} \
 			--make-pgen \
 			--out ${outfile}
 	}
@@ -253,6 +271,7 @@ task bgen_to_gen {
 
 	File bgen_file
 	File? sample_file
+	Float? maf
 	String outfile = basename(bgen_file, ".bgen")
 	Int? memory = 10
 	Int? disk = 20
@@ -261,6 +280,7 @@ task bgen_to_gen {
 		$PLINK2 \
 			--bgen ${bgen_file} \
 			--sample ${sample_file} \
+			${"--maf " + maf} \
 			--export oxford \
 			--out ${outfile}
 	}
@@ -285,7 +305,8 @@ workflow convert {
 	Array[File] input_files
 	Array[File]? sample_files
 	Array[File]? info_files
-	String? dosage_type = "GP"
+	String? dosage_type
+	Float? maf
 	String? variant_range_filter
 	String? memory
 	String? disk
@@ -300,6 +321,7 @@ workflow convert {
 				input:
 					bgen_file = fileset.left, 
 					sample_file = fileset.right,
+					maf = maf,
 					memory = memory,
 					disk = disk
 			}
@@ -315,6 +337,8 @@ workflow convert {
 			call vcf_to_bgen {
 				input:
 					vcf_file = input_file, 
+					dosage_type = dosage_type,
+					maf = maf,
 					variant_range_filter = variant_range_filter,
 					memory = memory,
 					disk = disk
@@ -350,6 +374,7 @@ workflow convert {
 				input:
 					vcf_file = input_file, 
 					dosage_type = dosage_type,
+					maf = maf,
 					memory = memory,
 					disk = disk
 			}
@@ -368,6 +393,7 @@ workflow convert {
 				input:
 					vcf_file = input_file, 
 					dosage_type = dosage_type,
+					maf = maf,
 					memory = memory,
 					disk = disk
 			}
@@ -449,6 +475,7 @@ workflow convert {
 		sample_files: "Array of .bgen sample files (optionally used in the .bgen to VCF conversion)."
 		info_files: "Array of variant info files (used in the Minimac to MMAP conversion)." 
 		dosage_type: "Type of allele dosage to read in from imputed VCF file (optional; options = GP/GP-force/HDS/DS, default GP)."
+		maf: "Optional float setting a minimum minor allele frequency filter."
 		variant_range_filter: "Optional string for variant filtering. Format: chr:start-stop (e.g. 2:100000-500000)."
 		memory: "Requested memory (in GB)."
 		disk: "Requested disk space (in GB)."

@@ -1,5 +1,6 @@
 {
   "convert.conversion": "vcf2bgen",
+  "convert.maf": 0.3,
   "convert.variant_range_filter": "22:16300000-16450000",
   "convert.input_files": ["testfiles/chr22subset.dose.vcf.gz","testfiles/chr22subset.dose.vcf.gz"]
 }
