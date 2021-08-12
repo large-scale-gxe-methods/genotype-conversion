@@ -86,7 +86,7 @@ task vcf_to_bgen {
 		$PLINK2 \
 			--vcf ${vcf_file} ${"dosage=" + dosage_type} \
 			${"--maf " + maf} \
-			--export bgen-1.2 id-paste=iid ${"vcf-dosage=" + dosage_type} \
+			--export bgen-1.2 id-paste=iid \
 			--out ${outfile}
 	}
 		#$QCTOOL \
@@ -474,7 +474,7 @@ workflow convert {
 		input_files: "Array of genotype dosage files (currently, in VCF or .bgen format)."
 		sample_files: "Array of .bgen sample files (optionally used in the .bgen to VCF conversion)."
 		info_files: "Array of variant info files (used in the Minimac to MMAP conversion)." 
-		dosage_type: "Type of allele dosage to read in from imputed VCF file (optional; options = GP/GP-force/HDS/DS, default GP)."
+		dosage_type: "Type of allele dosage to read in from imputed VCF file (optional; options = GP/GP-force/HDS/DS)."
 		maf: "Optional float setting a minimum minor allele frequency filter."
 		variant_range_filter: "Optional string for variant filtering. Format: chr:start-stop (e.g. 2:100000-500000)."
 		memory: "Requested memory (in GB)."
